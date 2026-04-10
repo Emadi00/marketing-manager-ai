@@ -173,6 +173,104 @@ export function readCalendarEvents(month: string): CalendarEvent[] {
   return events;
 }
 
+// ── Performance ───────────────────────────────────────────────────────────
+
+export interface PlatformStats {
+  followers: number | null;
+  growth: number | null;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  saves: number | null;
+  reach: number | null;
+  reelsPlays: number | null;
+  dailyData: Array<{ date: string; views?: number; likes?: number }>;
+}
+
+export interface PerformanceClient {
+  name: string;
+  emoji: string;
+  niche: string;
+  trend: string;
+  lastSync: string;
+  platforms: Record<string, PlatformStats>;
+}
+
+export interface PerformanceData {
+  lastUpdate: string;
+  clients: PerformanceClient[];
+}
+
+export function readPerformance(): PerformanceData {
+  const fp = path.join(DATA_DIR, "performance.json");
+  if (!fs.existsSync(fp)) return { lastUpdate: "", clients: [] };
+  return JSON.parse(fs.readFileSync(fp, "utf-8")) as PerformanceData;
+}
+
+// ── Contabilità ────────────────────────────────────────────────────────────
+
+export interface ContabilitaClientRow {
+  cliente: string;
+  videoShorts: number;
+  videoLong: number;
+  costoXVideo: number;
+  costoEditor: number;
+  costoAI: number;
+  fattura: number;
+  editor: string;
+  statoPagamento: string;
+  note: string;
+}
+
+export interface ContabilitaMese {
+  clienti: ContabilitaClientRow[];
+  costi: Array<{ nome: string; tipo: string; costoMensile: number; note: string }>;
+}
+
+export function readContabilita(): Record<string, Record<string, ContabilitaMese>> {
+  const fp = path.join(DATA_DIR, "contabilita.json");
+  if (!fs.existsSync(fp)) return {};
+  const raw = JSON.parse(fs.readFileSync(fp, "utf-8")) as Record<string, unknown>;
+  // Remove internal _note key
+  const { _note: _, ...years } = raw as Record<string, Record<string, ContabilitaMese>>;
+  return years;
+}
+
+// ── Analytics helpers ──────────────────────────────────────────────────────
+
+export interface PipelineFunnelStep {
+  label: string;
+  count: number;
+}
+
+export function computePipelineFunnel(): PipelineFunnelStep[] {
+  const { cards } = readPipeline();
+  const stepCounts: Record<string, number> = {};
+  for (const card of cards) {
+    for (const step of card.steps) {
+      if (step.status === "done") {
+        stepCounts[step.name] = (stepCounts[step.name] ?? 0) + 1;
+      }
+    }
+  }
+  const ORDER = ["Brief Creativo", "Strategia", "Video Remotion", "Approvazione", "Pubblicazione"];
+  return ORDER.map((label) => ({ label, count: stepCounts[label] ?? 0 }));
+}
+
+export function computeMonthlyProduction(): Array<{ month: string; prodotti: number; pubblicati: number }> {
+  const { cards } = readPipeline();
+  const byMonth: Record<string, { prodotti: number; pubblicati: number }> = {};
+  for (const card of cards) {
+    const m = card.createdAt?.slice(0, 7) ?? "unknown";
+    if (!byMonth[m]) byMonth[m] = { prodotti: 0, pubblicati: 0 };
+    byMonth[m].prodotti += 1;
+    if (card.status === "Pubblicato") byMonth[m].pubblicati += 1;
+  }
+  return Object.entries(byMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, v]) => ({ month, ...v }));
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 export function cardCost(card: PipelineCard): string {
