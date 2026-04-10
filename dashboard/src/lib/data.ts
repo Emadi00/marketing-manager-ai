@@ -236,6 +236,46 @@ export function readContabilita(): Record<string, Record<string, ContabilitaMese
   return years;
 }
 
+// ── Clienti Social ────────────────────────────────────────────────────────
+
+export interface ClienteSocial {
+  name: string;
+  user: string;
+  platforms: string[];
+  notes: string;
+}
+
+export function readClientiSocial(): ClienteSocial[] {
+  const SMM_PATH = "C:\\Users\\super\\Desktop\\MARKETING MANAGER";
+  const fp = path.join(SMM_PATH, "clienti_social.json");
+  if (!fs.existsSync(fp)) return [];
+  const raw = JSON.parse(fs.readFileSync(fp, "utf-8")) as Record<string, unknown>;
+  return Object.entries(raw)
+    .filter(([k]) => k !== "_note")
+    .map(([name, v]) => {
+      const val = v as Record<string, unknown>;
+      return {
+        name,
+        user: (val.user as string) ?? "",
+        platforms: (val.platforms as string[]) ?? [],
+        notes: (val.notes as string) ?? "",
+      };
+    });
+}
+
+export interface ContabilitaConfigClient {
+  costoXShort: number;
+  costoXLong: number;
+  statoPagamento: string;
+}
+
+export function readContabilitaConfig(): Record<string, ContabilitaConfigClient> {
+  const fp = path.join(DATA_DIR, "contabilita_config.json");
+  if (!fs.existsSync(fp)) return {};
+  const raw = JSON.parse(fs.readFileSync(fp, "utf-8")) as Record<string, unknown>;
+  return (raw.clienti as Record<string, ContabilitaConfigClient>) ?? {};
+}
+
 // ── Analytics helpers ──────────────────────────────────────────────────────
 
 export interface PipelineFunnelStep {

@@ -1,8 +1,25 @@
+import {
+  readClientiSocial,
+  readContabilitaConfig,
+  readPipeline,
+  readSmmLog,
+} from "@/lib/data";
+import { ClientsView } from "@/components/ClientsView";
+
 export default function ClientsPage() {
+  const clients   = readClientiSocial();
+  const pricing   = readContabilitaConfig();
+  const { cards } = readPipeline();
+  const smmLog    = readSmmLog();
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-white mb-1">Clienti</h1>
-      <p className="text-white/40 text-sm">Gestione clienti — arrivo STEP 5</p>
+    <div className="flex flex-col h-full">
+      <ClientsView
+        clients={clients}
+        pricing={pricing}
+        cards={cards}
+        smmLog={smmLog}
+      />
     </div>
   );
 }
