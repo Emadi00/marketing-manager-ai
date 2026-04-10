@@ -1,0 +1,63 @@
+{
+  "_note": "Mappa cliente → config Upload-Post. 'user' = username del profilo connesso su Upload-Post. 'platforms' = piattaforme su cui pubblicare. Piattaforme valide: tiktok, instagram, youtube, linkedin, facebook, x, threads, pinterest, bluesky, reddit.",
+
+  "Ristomedia": {
+    "user": "ristomedia",
+    "platforms": ["instagram", "facebook"],
+    "notes": "Facebook page_id deve essere configurato in Upload-Post dashboard"
+  },
+
+  "Francesco Corsi": {
+    "user": "francescorsi",
+    "platforms": ["instagram", "tiktok"],
+    "notes": "Account medico MTC"
+  },
+
+  "Elisa Giuli": {
+    "user": "elisagiuli",
+    "platforms": ["instagram", "tiktok"],
+    "notes": ""
+  },
+
+  "Luka Luna": {
+    "user": "lukaluna",
+    "platforms": ["instagram", "tiktok", "youtube"],
+    "notes": ""
+  },
+
+  "Maraki Agency": {
+    "user": "marakiagency",
+    "platforms": ["instagram", "linkedin"],
+    "notes": "Agenzia — preferisce LinkedIn"
+  },
+
+  "Symposium ADV": {
+    "user": "symposiumadv",
+    "platforms": ["instagram", "facebook"],
+    "notes": ""
+  },
+
+  "Casadei": {
+    "user": "casadei",
+    "platforms": ["instagram", "tiktok"],
+    "notes": ""
+  },
+
+  "Lorena Mosca Digitale": {
+    "user": "lorenamosca",
+    "platforms": ["instagram"],
+    "notes": ""
+  },
+
+  "Alessio Serio": {
+    "user": "alessioserio",
+    "platforms": ["instagram", "tiktok"],
+    "notes": ""
+  },
+
+  "VideoCraft Studio": {
+    "user": "videocraftstudio",
+    "platforms": ["instagram", "tiktok", "youtube", "linkedin"],
+    "notes": "Account principale agenzia"
+  }
+}

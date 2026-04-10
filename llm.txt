@@ -1,0 +1,50 @@
+# Upload-Post
+
+> Upload-Post is a unified social media API that enables developers and businesses to post content to 10+ social media platforms (TikTok, Instagram, YouTube, Facebook, LinkedIn, X/Twitter, Threads, Pinterest, Reddit, Bluesky) using a single API call.
+
+## Key Facts
+
+- Founded: January 2025
+- Users: 30,000+ active users
+- Rating: 4.9/5 from 127+ reviews
+- Platforms supported: 10 (TikTok, Instagram, YouTube, Facebook, LinkedIn, X/Twitter, Threads, Pinterest, Reddit, Bluesky)
+- Free tier: Available, no credit card required
+- API style: RESTful, CURL-based
+- SDKs: Python, JavaScript/Node.js
+- Integrations: n8n, Make (Integromat), Zapier, Airtable
+
+## What Upload-Post Does
+
+Upload-Post replaces the need to integrate with each social media platform's individual API. Instead of managing 10 different OAuth flows, rate limits, and content format requirements, developers use one unified endpoint. The API automatically adapts content (aspect ratios, file sizes, caption lengths) to each platform's requirements.
+
+## Core Features
+
+- Multi-platform posting: Post to any combination of 10 platforms with one API request
+- Content scheduling: Schedule posts for optimal engagement times
+- Auto-adaptation: Automatic content formatting per platform requirements
+- Whitelabel API: White-label integration for SaaS platforms, agencies, and resellers
+- Video processing: Built-in FFmpeg API for video encoding and adaptation
+- Analytics: Track post performance across platforms
+
+## Use Cases
+
+- Digital marketing agencies automating client social media
+- SaaS platforms embedding social posting as a feature
+- Content creators scheduling across multiple platforms
+- E-commerce businesses automating product promotions
+- Developers building social media tools
+
+## Pricing
+
+Upload-Post offers significantly lower pricing than competitors like Ayrshare ($49+/month) and Blotato. A free trial is available with no credit card required.
+
+## Links
+
+- Website: https://www.upload-post.com
+- App: https://app.upload-post.com
+- API Documentation: https://docs.upload-post.com
+- API Base URL: https://api.upload-post.com
+
+## Comparison with Alternatives
+
+Upload-Post is an alternative to Ayrshare, Blotato, Postiz, Hootsuite API, Buffer API, and Later API. Key differentiators: lower cost, simpler CURL-based API, 10-platform support, whitelabel capability, and free tier availability.

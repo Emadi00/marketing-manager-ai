@@ -1,0 +1,36 @@
+[
+  {
+    "timestamp": "2026-04-10T12:08:19.113037+00:00",
+    "client_id": "VideoCraft Studio",
+    "user": "videocraftstudio",
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube",
+      "linkedin"
+    ],
+    "scheduled": null,
+    "video": "video.mp4",
+    "status": "error",
+    "request_id": null,
+    "job_id": null,
+    "error": "HTTP 401: {\"success\":false,\"message\":\"Invalid or expired token\"}\n"
+  },
+  {
+    "timestamp": "2026-04-10T12:07:11.165258+00:00",
+    "client_id": "VideoCraft Studio",
+    "user": "videocraftstudio",
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube",
+      "linkedin"
+    ],
+    "scheduled": null,
+    "video": "video.mp4",
+    "status": "error",
+    "request_id": null,
+    "job_id": null,
+    "error": "HTTP 401: {\"success\":false,\"message\":\"Invalid or expired token\"}\n"
+  }
+]
