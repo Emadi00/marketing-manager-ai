@@ -147,10 +147,10 @@ DASHBOARD_DATA = os.environ.get("DASHBOARD_DATA", r"C:\Users\super\Desktop\ai-co
 OUTPUT_BASE    = os.environ.get("OUTPUT_BASE",    r"C:\Users\super\Desktop\OUTPUT")
 
 # ── Notion integration ────────────────────────────────────────────────────────
-NOTION_TOKEN         = "os.environ.get("NOTION_TOKEN", "")"
+NOTION_TOKEN         = _load_secret("NOTION_TOKEN",         "notion", "token")
 NOTION_VERSION       = "2022-06-28"
-NOTION_DB_PRODUZIONE = "0f72df6fb7db432b81e8e8e865c8736b"  # 💰 Contabilità Mensile
-NOTION_DB_COSTI      = "e1bcc557be4a443bb60ff66b01f91c7a"  # 🔧 Costi Fissi Mensili
+NOTION_DB_PRODUZIONE = _load_secret("NOTION_DB_PRODUZIONE", "notion", "dbProduzione") or "0f72df6fb7db432b81e8e8e865c8736b"
+NOTION_DB_COSTI      = _load_secret("NOTION_DB_COSTI",      "notion", "dbCosti")      or "e1bcc557be4a443bb60ff66b01f91c7a"
 _MESI_IT = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
             "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"]
 
