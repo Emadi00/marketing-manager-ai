@@ -97,6 +97,7 @@ broll_cache/
 CODICE/video-editor/public/broll/
 CODICE/video-editor/public/voiceover.mp3
 CODICE/video-editor/public/timeline.json
+CODICE/video-editor/pipeline_current.json
 
 # ── Backup e file temporanei ──────────────────────────────────
 *_backup.py

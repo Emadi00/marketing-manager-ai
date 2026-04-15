@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "ES2022"],
+    "module": "commonjs",
+    "target": "ES2022",
+    "jsx": "react",
+    "strict": true,
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "src/scenes",
+    "src/components/KineticText.tsx",
+    "src/components/VisualAnchor.tsx"
+  ]
+}
