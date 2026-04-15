@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   PenLine, TrendingUp, Film, UserCheck, Share2, Brain, Palette,
   CheckCircle2, XCircle, Circle, Loader2, ChevronDown, ChevronUp,
-  Clock, Trash2,
+  Clock, Trash2, CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PipelineCard as PipelineCardType, StepStatus } from "@/lib/data";
@@ -120,6 +120,35 @@ function LogLine({ type, msg, time }: { type: string; msg: string; time: string 
   );
 }
 
+// ── Deadline badge ────────────────────────────────────────────────────────
+
+function DeadlineBadge({ deadline, done }: { deadline: string; done: boolean }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dl = new Date(deadline + "T00:00:00");
+  const diffDays = Math.round((dl.getTime() - today.getTime()) / 86400000);
+
+  if (done) return null;
+
+  const color =
+    diffDays < 0  ? "text-red-400 border-red-400/30 bg-red-400/10" :
+    diffDays <= 2 ? "text-amber-400 border-amber-400/30 bg-amber-400/10" :
+                    "text-white/40 border-white/10 bg-white/[0.04]";
+
+  const label =
+    diffDays < 0  ? `Scaduto ${Math.abs(diffDays)}g fa` :
+    diffDays === 0 ? "Scade oggi" :
+    diffDays === 1 ? "Scade domani" :
+                    `${new Date(deadline + "T00:00:00").toLocaleDateString("it-IT", { day: "2-digit", month: "short" })}`;
+
+  return (
+    <span className={cn("text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 font-medium", color)}>
+      <CalendarClock className="w-3 h-3" />
+      {label}
+    </span>
+  );
+}
+
 // ── Main card ─────────────────────────────────────────────────────────────
 
 export function PipelineCard({ card }: { card: PipelineCardType }) {
@@ -226,10 +255,12 @@ export function PipelineCard({ card }: { card: PipelineCardType }) {
 
       {/* Footer */}
       <div className="px-4 pb-3 flex items-center justify-between">
-        <span className="text-[11px] text-white/20 font-mono">{card.id}</span>
         <span className="text-[11px] text-white/30 flex items-center gap-1">
           <Clock className="w-3 h-3" />{card.createdAt}
         </span>
+        {card.deadline && (
+          <DeadlineBadge deadline={card.deadline} done={card.status === "Approvato" || card.status === "Pubblicato"} />
+        )}
       </div>
     </div>
   );

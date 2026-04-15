@@ -33,6 +33,7 @@ export default function AnalyticsPage() {
         monthly={monthly}
         totalCards={cards.length}
         lastSync={perf.lastUpdate}
+        showSyncButton
       />
     </div>
   );

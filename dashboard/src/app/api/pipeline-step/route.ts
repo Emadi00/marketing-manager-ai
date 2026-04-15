@@ -18,11 +18,14 @@ export async function POST(req: NextRequest) {
     }
 
     const cards = (data.cards ?? []) as Array<Record<string, unknown>>;
-    const card = cards.find((c) => c.id === body.card_id);
+    // Accept both camelCase (cardId/stepId) and snake_case (card_id/step_id)
+    const cardId = (body.cardId ?? body.card_id) as string | undefined;
+    const stepId = (body.stepId ?? body.step_id) as string | undefined;
+    const card = cards.find((c) => c.id === cardId);
 
     if (card) {
       const steps = (card.steps ?? []) as Array<Record<string, unknown>>;
-      const step = steps.find((s) => s.id === body.step_id);
+      const step = steps.find((s) => s.id === stepId);
       if (step) {
         Object.assign(step, {
           status: body.status,

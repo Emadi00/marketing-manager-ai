@@ -51,12 +51,14 @@ function checkKey(
 
 export async function GET() {
   const status = {
-    anthropic:   checkKey("ANTHROPIC_API_KEY", "anthropic", "apiKey"),
-    telegram:    checkKey("TELEGRAM_TOKEN",    "telegram",  "botToken"),
-    upload_post: checkKey("UPLOAD_POST_API_KEY","upload_post","apiKey"),
-    ideogram:    checkKey("IDEOGRAM_API_KEY",  "ideogram",  "apiKey"),
-    meta_token:  checkKey("META_PAGE_ACCESS_TOKEN", "meta", "pageAccessToken"),
-    meta_ig_id:  checkKey("META_IG_USER_ID",   "meta",  "igUserId"),
+    anthropic:   checkKey("ANTHROPIC_API_KEY",        "anthropic",   "apiKey"),
+    telegram:    checkKey("TELEGRAM_TOKEN",            "telegram",    "botToken"),
+    upload_post: checkKey("UPLOAD_POST_API_KEY",       "upload_post", "apiKey"),
+    ideogram:    checkKey("IDEOGRAM_API_KEY",          "ideogram",    "apiKey"),
+    pexels:      checkKey("PEXELS_API_KEY",            "pexels",      "apiKey"),
+    elevenlabs:  checkKey("ELEVENLABS_API_KEY",        "elevenlabs",  "apiKey"),
+    meta_token:  checkKey("META_PAGE_ACCESS_TOKEN",    "meta",        "pageAccessToken"),
+    meta_ig_id:  checkKey("META_IG_USER_ID",           "meta",        "igUserId"),
   };
 
   return NextResponse.json(status);

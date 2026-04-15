@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { readCalendarEvents, readClients } from "@/lib/data";
+import { readCalendarEvents, readClients, readPipeline } from "@/lib/data";
 import { CalendarGrid } from "@/components/CalendarGrid";
 
 interface Props {
@@ -14,13 +14,14 @@ export default async function CalendarPage({ searchParams }: Props) {
   const defaultMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const month = params.month ?? defaultMonth;
 
-  const events = readCalendarEvents(month);
-  const clients = readClients();
+  const events        = readCalendarEvents(month);
+  const clients       = readClients();
+  const { cards }     = readPipeline();
 
   return (
     <div className="flex flex-col h-full">
       <Suspense>
-        <CalendarGrid month={month} events={events} clients={clients} />
+        <CalendarGrid month={month} events={events} clients={clients} cards={cards} />
       </Suspense>
     </div>
   );

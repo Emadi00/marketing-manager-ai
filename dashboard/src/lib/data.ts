@@ -44,6 +44,7 @@ export interface PipelineCard {
   angle?: string;
   status: CardStatus;
   createdAt: string;
+  deadline?: string; // YYYY-MM-DD — scadenza consegna
   currentStep: number;
   steps: PipelineStep[];
   log?: LogEntry[];
@@ -185,6 +186,7 @@ export interface PlatformStats {
   reach: number | null;
   reelsPlays: number | null;
   dailyData: Array<{ date: string; views?: number; likes?: number }>;
+  _syncError?: string | null; // set when last sync failed for this platform
 }
 
 export interface PerformanceClient {
@@ -263,10 +265,21 @@ export function readClientiSocial(): ClienteSocial[] {
     });
 }
 
+export interface TipologiaVideo {
+  nome: string;
+  prezzo: number;
+  videiFatti: number;
+  videoInclusi: number; // 0 = illimitati / non applicabile
+}
+
 export interface ContabilitaConfigClient {
-  costoXShort: number;
-  costoXLong: number;
+  tipologie: TipologiaVideo[];
   statoPagamento: string;
+  tipoContratto: "pacchetto" | "a-video";
+  // legacy fields (backward compat)
+  costoXShort?: number;
+  costoXLong?: number;
+  videiFatti?: number;
 }
 
 export function readContabilitaConfig(): Record<string, ContabilitaConfigClient> {
@@ -309,6 +322,146 @@ export function computeMonthlyProduction(): Array<{ month: string; prodotti: num
   return Object.entries(byMonth)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, v]) => ({ month, ...v }));
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────
+
+export interface AgentMetrics {
+  tasksCompleted?: number;
+  approvalRate?: number;
+  avgReviewTime?: string;
+  [key: string]: unknown;
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  role: string;
+  emoji: string;
+  category: string;
+  status: "idle" | "running" | "error" | "waiting";
+  currentTask: string | null;
+  progress: number;
+  lastOutput: string | null;
+  lastUpdate: string | null;
+  tasksToday: number;
+  recentTasks: string[];
+  metrics: AgentMetrics;
+}
+
+export interface AgentsData {
+  lastUpdate: string | null;
+  agents: Agent[];
+}
+
+export function readAgents(): AgentsData {
+  const fp = path.join(DATA_DIR, "agents.json");
+  if (!fs.existsSync(fp)) return { lastUpdate: null, agents: [] };
+  return JSON.parse(fs.readFileSync(fp, "utf-8")) as AgentsData;
+}
+
+// ── Connections ───────────────────────────────────────────────────────────
+
+export interface PlatformConnection {
+  name: string;
+  icon: string;
+  status: "connected" | "disconnected" | "expired";
+  handle?: string | null;
+  accountId?: string;
+  accessLevel?: string;
+  connectedAt?: string;
+  note?: string;
+  assets?: Array<{ type: string; name: string; id: string }>;
+  authorizedAgents?: string[];
+}
+
+export interface ClientConnections {
+  name: string;
+  platforms: Record<string, PlatformConnection>;
+}
+
+export interface ConnectionsData {
+  lastUpdate: string;
+  clients: Record<string, ClientConnections>;
+}
+
+export function readConnections(): ConnectionsData {
+  const fp = path.join(DATA_DIR, "connections.json");
+  if (!fs.existsSync(fp))
+    return { lastUpdate: "", clients: {} };
+  return JSON.parse(fs.readFileSync(fp, "utf-8")) as ConnectionsData;
+}
+
+// ── Ideas ─────────────────────────────────────────────────────────────────
+
+export interface ContentIdea {
+  id?: string;
+  hook: string;
+  angle?: string;
+  format?: string;
+  priority?: string;
+  status?: string;
+}
+
+export interface IdeasClient {
+  id: string;
+  name: string;
+  emoji: string;
+  niche: string;
+  reels: ContentIdea[];
+  posts: ContentIdea[];
+  carousels: ContentIdea[];
+}
+
+export interface IdeasData {
+  lastUpdate: string | null;
+  clients: IdeasClient[];
+}
+
+export function readIdeas(): IdeasData {
+  const fp = path.join(DATA_DIR, "ideas.json");
+  if (!fs.existsSync(fp)) return { lastUpdate: null, clients: [] };
+  return JSON.parse(fs.readFileSync(fp, "utf-8")) as IdeasData;
+}
+
+// ── Trading ────────────────────────────────────────────────────────────────
+
+export interface TradingAccount {
+  broker: string;
+  initialValue: number;
+  currentValue: number;
+  peakValue: number;
+  monthlyStartValue: number;
+  dailyPnL: number;
+  dailyPnLPct: number;
+  totalReturn: number;
+  totalReturnPct: number;
+  maxDrawdown: number;
+  circuitBreaker: boolean;
+}
+
+export interface AllocationEntry {
+  pct: number;
+  value: number;
+  return: number;
+}
+
+export interface TradingData {
+  lastUpdate: string;
+  account: TradingAccount;
+  regime: Record<string, unknown>;
+  allocation: Record<string, AllocationEntry>;
+  positions?: unknown[];
+  recentTrades?: unknown[];
+  weeklyPnL?: unknown[];
+  signals?: unknown[];
+  strategies?: unknown[];
+}
+
+export function readTrading(): TradingData | null {
+  const fp = path.join(DATA_DIR, "trading.json");
+  if (!fs.existsSync(fp)) return null;
+  return JSON.parse(fs.readFileSync(fp, "utf-8")) as TradingData;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

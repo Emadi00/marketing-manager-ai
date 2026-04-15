@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import {
   BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { TrendingUp, Eye, Heart, Users, Video, Repeat2 } from "lucide-react";
+import { TrendingUp, Eye, Heart, Users, Video, Repeat2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   PerformanceClient,
@@ -369,6 +370,7 @@ interface Props {
   monthly: Array<{ month: string; prodotti: number; pubblicati: number }>;
   totalCards: number;
   lastSync: string;
+  showSyncButton?: boolean;
 }
 
 export function AnalyticsDashboard({
@@ -377,8 +379,37 @@ export function AnalyticsDashboard({
   monthly,
   totalCards,
   lastSync,
+  showSyncButton = false,
 }: Props) {
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 30 }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSyncMsg({ text: `Sincronizzato: ${(data.synced as string[]).join(" + ")}`, ok: true });
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        setSyncMsg({ text: data.error ?? data.errors?.[0] ?? "Errore sync", ok: false });
+      }
+    } catch {
+      setSyncMsg({ text: "Backend non raggiungibile", ok: false });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const ig = perfClient?.platforms["instagram"];
+  const fb = perfClient?.platforms["facebook"];
+
   const totalViews = ig?.views ?? 0;
   const totalLikes = ig?.likes ?? 0;
   const totalComments = ig?.comments ?? 0;
@@ -389,39 +420,99 @@ export function AnalyticsDashboard({
       ? (((totalLikes + totalComments + totalSaves) / totalViews) * 100).toFixed(2)
       : "—";
 
+  const fbSyncError = fb?._syncError ?? null;
+  const fbFollowers = fb?.followers ?? null;
+  const fbViews = fb?.views ?? null;
+  const fbLikes = fb?.likes ?? null;
+  const fbComments = fb?.comments ?? null;
+  // Show FB section if fb key exists in performance.json (even with error)
+  const hasFbData = fb != null;
+  // Format value: show "N/D" when null/0 + error exists, otherwise the real number
+  function fbFmt(val: number | null): string {
+    if ((val === null || val === 0) && fbSyncError) return "N/D";
+    return (val ?? 0).toLocaleString("it-IT");
+  }
+
   return (
     <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-      {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Views Instagram"
-          value={totalViews.toLocaleString("it-IT")}
-          sub="totali account"
-          icon={Eye}
-          color={NEON}
-        />
-        <KpiCard
-          label="Followers"
-          value={followers.toLocaleString("it-IT")}
-          sub="Instagram"
-          icon={Users}
-          color={CYAN}
-        />
-        <KpiCard
-          label="Engagement Rate"
-          value={`${engRate}%`}
-          sub="likes + commenti + salvataggi / views"
-          icon={Heart}
-          color={AMBER}
-        />
-        <KpiCard
-          label="Contenuti in Pipeline"
-          value={String(totalCards)}
-          sub="questo mese"
-          icon={Video}
-          color={PURPLE}
-        />
+      {/* KPI row — Instagram */}
+      <div>
+        <p className="text-xs text-white/30 font-medium mb-3 uppercase tracking-wider">Instagram</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            label="Views"
+            value={totalViews.toLocaleString("it-IT")}
+            sub="totali account"
+            icon={Eye}
+            color={NEON}
+          />
+          <KpiCard
+            label="Followers"
+            value={followers.toLocaleString("it-IT")}
+            sub="Instagram"
+            icon={Users}
+            color={CYAN}
+          />
+          <KpiCard
+            label="Engagement Rate"
+            value={`${engRate}%`}
+            sub="likes + commenti + salvataggi / views"
+            icon={Heart}
+            color={AMBER}
+          />
+          <KpiCard
+            label="Contenuti in Pipeline"
+            value={String(totalCards)}
+            sub="questo mese"
+            icon={Video}
+            color={PURPLE}
+          />
+        </div>
       </div>
+
+      {/* KPI row — Facebook */}
+      {hasFbData && (
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <p className="text-xs text-white/30 font-medium uppercase tracking-wider">Facebook</p>
+            {fbSyncError && (
+              <span className="text-[11px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-2 py-0.5 flex items-center gap-1">
+                ⚠️ {fbSyncError}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              label="Fan"
+              value={fbFmt(fbFollowers)}
+              sub="fan della pagina"
+              icon={Users}
+              color={fbSyncError ? AMBER : CYAN}
+            />
+            <KpiCard
+              label="Views"
+              value={fbFmt(fbViews)}
+              sub="video + impressioni"
+              icon={Eye}
+              color={fbSyncError ? AMBER : NEON}
+            />
+            <KpiCard
+              label="Engagement"
+              value={fbFmt((fbLikes ?? 0) + (fbComments ?? 0) > 0 ? (fbLikes ?? 0) + (fbComments ?? 0) : null)}
+              sub="interazioni totali"
+              icon={Heart}
+              color={fbSyncError ? AMBER : AMBER}
+            />
+            <KpiCard
+              label="Reach"
+              value={fb?.reach != null ? fb.reach.toLocaleString("it-IT") : (fbSyncError ? "N/D" : "—")}
+              sub="copertura organica"
+              icon={Repeat2}
+              color={fbSyncError ? AMBER : PURPLE}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Row 2: views trend + platform comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -435,42 +526,74 @@ export function AnalyticsDashboard({
         )}
       </div>
 
-      {/* Row 3: engagement pie + pipeline funnel */}
+      {/* Row 3: engagement pie (IG + FB) + pipeline funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {ig ? (
-          <EngagementPie
-            likes={totalLikes}
-            comments={totalComments}
-            saves={totalSaves}
-            platform="Instagram"
-          />
-        ) : (
-          <div className="rounded-xl border border-white/[0.08] bg-[#111111] p-5 flex items-center justify-center">
-            <p className="text-white/20 text-sm">Nessun dato engagement</p>
-          </div>
-        )}
+        <div className="flex flex-col gap-4">
+          {ig ? (
+            <EngagementPie
+              likes={totalLikes}
+              comments={totalComments}
+              saves={totalSaves}
+              platform="Instagram"
+            />
+          ) : (
+            <div className="rounded-xl border border-white/[0.08] bg-[#111111] p-5 flex items-center justify-center">
+              <p className="text-white/20 text-sm">Nessun dato engagement Instagram</p>
+            </div>
+          )}
+          {hasFbData && !fbSyncError && ((fbLikes ?? 0) + (fbComments ?? 0)) > 0 && (
+            <EngagementPie
+              likes={fbLikes ?? 0}
+              comments={fbComments ?? 0}
+              saves={0}
+              platform="Facebook"
+            />
+          )}
+        </div>
         <PipelineFunnelChart steps={funnel} />
       </div>
 
       {/* Row 4: monthly production */}
       <MonthlyProductionChart data={monthly} />
 
-      {/* Footer sync info */}
-      <p className="text-[11px] text-white/20 text-right pb-2">
-        Ultimo sync:{" "}
-        {lastSync
-          ? new Date(lastSync).toLocaleString("it-IT", {
-              day: "2-digit",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "—"}
-        {" · "}
-        <span className="italic">
-          Dati views/follower reali da Meta Business API
-        </span>
-      </p>
+      {/* Footer sync info + button */}
+      <div className="flex items-center justify-between pb-2">
+        <div className="flex items-center gap-3">
+          {showSyncButton && (
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                syncing
+                  ? "bg-white/[0.06] text-white/30 cursor-not-allowed"
+                  : "bg-[#39FF14]/10 text-[#39FF14] hover:bg-[#39FF14]/20"
+              )}
+            >
+              <RefreshCw className={cn("w-3 h-3", syncing && "animate-spin")} />
+              {syncing ? "Sync in corso…" : "Aggiorna dati"}
+            </button>
+          )}
+          {syncMsg && (
+            <span className={cn("text-xs", syncMsg.ok ? "text-[#39FF14]" : "text-red-400")}>
+              {syncMsg.ok ? "✓" : "✗"} {syncMsg.text}
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] text-white/20">
+          Ultimo sync:{" "}
+          {lastSync
+            ? new Date(lastSync).toLocaleString("it-IT", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "—"}
+          {" · "}
+          <span className="italic">Meta Business API</span>
+        </p>
+      </div>
     </div>
   );
 }

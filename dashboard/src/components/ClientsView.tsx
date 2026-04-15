@@ -4,12 +4,13 @@ import { useState, useMemo } from "react";
 import {
   Search, ChevronRight, Video, Send,
   Euro, StickyNote, Pencil, Check, X, Loader2,
+  Package, Film,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PipelineRow } from "@/components/PipelineCard";
 import type {
-  ClienteSocial, ContabilitaConfigClient, PipelineCard, SmmLogEntry,
+  ClienteSocial, ContabilitaConfigClient, TipologiaVideo, PipelineCard, SmmLogEntry,
 } from "@/lib/data";
 
 // Il solo cliente che pubblica sui social
@@ -152,6 +153,88 @@ function EditableField({
   );
 }
 
+// ── Contract type toggle ───────────────────────────────────────────────────
+
+function ContractTypeToggle({
+  value, onSave,
+}: {
+  value: "pacchetto" | "a-video"; onSave: (v: "pacchetto" | "a-video") => Promise<void>;
+}) {
+  const [saving, setSaving] = useState(false);
+  const isPacchetto = value === "pacchetto";
+
+  async function toggle() {
+    setSaving(true);
+    try { await onSave(isPacchetto ? "a-video" : "pacchetto"); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={toggle}
+        disabled={saving}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all disabled:opacity-50",
+          isPacchetto
+            ? "bg-violet-400/10 text-violet-300 border-violet-400/30 hover:bg-violet-400/20"
+            : "bg-amber-400/10 text-amber-300 border-amber-400/30 hover:bg-amber-400/20"
+        )}
+      >
+        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Package className="w-3 h-3" />}
+        {isPacchetto ? "Pacchetto" : "A video"}
+      </button>
+      <span className="text-[10px] text-white/25">clicca per cambiare</span>
+    </div>
+  );
+}
+
+// ── Video prodotti list ────────────────────────────────────────────────────
+
+function VideoProducedList({ cards }: { cards: PipelineCard[] }) {
+  const produced = cards.filter(
+    (c) => c.status === "Pubblicato" || c.status === "Approvato"
+  ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const STATUS_DOT: Record<string, string> = {
+    Pubblicato: "bg-[#39FF14]",
+    Approvato:  "bg-blue-400",
+  };
+
+  if (produced.length === 0) {
+    return (
+      <p className="text-white/20 text-sm text-center py-6 rounded-xl border border-white/[0.05]">
+        Nessun video prodotto ancora
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
+      {produced.map((card) => (
+        <div
+          key={card.id}
+          className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05] last:border-0"
+        >
+          <span className={cn("w-2 h-2 rounded-full shrink-0", STATUS_DOT[card.status] ?? "bg-white/20")} />
+          <div className="flex-1 min-w-0">
+            <p className="text-white/80 text-xs truncate">{card.hook || card.title}</p>
+            <p className="text-white/30 text-[10px] mt-0.5">{card.type} · {card.createdAt}</p>
+          </div>
+          <span className={cn(
+            "text-[10px] px-2 py-0.5 rounded-full border shrink-0",
+            card.status === "Pubblicato"
+              ? "bg-[#39FF14]/10 text-[#39FF14] border-[#39FF14]/20"
+              : "bg-blue-400/10 text-blue-400 border-blue-400/20"
+          )}>
+            {card.status}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Status pagamento toggle ────────────────────────────────────────────────
 
 function PagamentoToggle({
@@ -184,6 +267,98 @@ function PagamentoToggle({
   );
 }
 
+// ── Tipologia row (inline edit) ────────────────────────────────────────────
+
+function TipologiaRow({
+  tipologia, index,
+  onSave, onDelete,
+}: {
+  tipologia: TipologiaVideo;
+  index: number;
+  onSave: (index: number, fields: Partial<TipologiaVideo>) => Promise<void>;
+  onDelete: (index: number) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ ...tipologia });
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try { await onSave(index, draft); setEditing(false); }
+    finally { setSaving(false); }
+  }
+  function cancel() { setDraft({ ...tipologia }); setEditing(false); }
+
+  const progressPct = tipologia.videoInclusi > 0
+    ? Math.min(100, Math.round((tipologia.videiFatti / tipologia.videoInclusi) * 100))
+    : null;
+
+  if (editing) {
+    return (
+      <tr className="bg-[#39FF14]/5 border-b border-white/[0.06]">
+        <td className="px-3 py-2">
+          <input value={draft.nome} onChange={e => setDraft(d => ({ ...d, nome: e.target.value }))}
+            className="w-full bg-white/[0.08] border border-[#39FF14]/40 rounded px-2 py-1 text-xs text-white outline-none" />
+        </td>
+        <td className="px-3 py-2">
+          <input type="number" value={draft.prezzo} onChange={e => setDraft(d => ({ ...d, prezzo: parseFloat(e.target.value) || 0 }))}
+            className="w-16 bg-white/[0.08] border border-[#39FF14]/40 rounded px-2 py-1 text-xs text-white outline-none text-right" />
+        </td>
+        <td className="px-3 py-2">
+          <input type="number" value={draft.videiFatti} onChange={e => setDraft(d => ({ ...d, videiFatti: parseInt(e.target.value) || 0 }))}
+            className="w-12 bg-white/[0.08] border border-[#39FF14]/40 rounded px-2 py-1 text-xs text-white outline-none text-right" />
+        </td>
+        <td className="px-3 py-2">
+          <input type="number" value={draft.videoInclusi} onChange={e => setDraft(d => ({ ...d, videoInclusi: parseInt(e.target.value) || 0 }))}
+            className="w-12 bg-white/[0.08] border border-[#39FF14]/40 rounded px-2 py-1 text-xs text-white outline-none text-right"
+            placeholder="0=∞" />
+        </td>
+        <td className="px-2 py-2">
+          <div className="flex items-center gap-1">
+            <button onClick={save} disabled={saving} className="text-[#39FF14] hover:opacity-80 disabled:opacity-40">
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            </button>
+            <button onClick={cancel} className="text-white/30 hover:text-white/60"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr className="border-b border-white/[0.05] hover:bg-white/[0.02] group/row">
+      <td className="px-3 py-2.5 text-white/80 text-xs font-medium">{tipologia.nome}</td>
+      <td className="px-3 py-2.5 text-right">
+        <span className="text-[#39FF14] text-xs font-mono">€{tipologia.prezzo}</span>
+      </td>
+      <td className="px-3 py-2.5 text-right text-white/60 text-xs">{tipologia.videiFatti}</td>
+      <td className="px-3 py-2.5">
+        {progressPct !== null ? (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#39FF14] rounded-full transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-white/30 shrink-0">{tipologia.videiFatti}/{tipologia.videoInclusi}</span>
+          </div>
+        ) : (
+          <span className="text-white/20 text-xs">—</span>
+        )}
+      </td>
+      <td className="px-2 py-2.5">
+        <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+          <button onClick={() => { setDraft({ ...tipologia }); setEditing(true); }}
+            className="text-white/25 hover:text-white/60"><Pencil className="w-3 h-3" /></button>
+          <button onClick={() => onDelete(index)}
+            className="text-white/20 hover:text-red-400"><X className="w-3 h-3" /></button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 // ── Detail panel ───────────────────────────────────────────────────────────
 
 function ClientDetail({
@@ -197,23 +372,19 @@ function ClientDetail({
   const clientCards = cards.filter((c) => c.client.toLowerCase() === client.name.toLowerCase());
   const clientLog   = smmLog.filter((e) => e.client_id.toLowerCase() === client.name.toLowerCase());
 
-  async function saveField(field: string, value: string) {
-    const body: Record<string, string | number> = { name: client.name };
-    if (field === "notes") {
-      body.notes = value;
-    } else if (field === "costoXShort") {
-      body.costoXShort = parseFloat(value) || 0;
-    } else if (field === "costoXLong") {
-      body.costoXLong = parseFloat(value) || 0;
-    } else if (field === "statoPagamento") {
-      body.statoPagamento = value;
-    }
+  async function apiPost(payload: Record<string, unknown>) {
     await fetch("/api/clients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ name: client.name, ...payload }),
     });
     router.refresh();
+  }
+
+  async function saveField(field: string, value: string | number) {
+    if (field === "notes")            await apiPost({ notes: String(value) });
+    else if (field === "statoPagamento") await apiPost({ statoPagamento: String(value) });
+    else if (field === "tipoContratto")  await apiPost({ tipoContratto: String(value) });
   }
 
   return (
@@ -237,41 +408,78 @@ function ClientDetail({
       </div>
 
       <div className="px-6 py-4 space-y-6">
-        {/* Pricing */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Euro className="w-3.5 h-3.5 text-white/30" />
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Pricing</h3>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg border border-white/[0.08] bg-[#0a0a0a] p-3">
-              <p className="text-white/30 text-[11px] mb-1">€ / Short</p>
-              <EditableField
-                label="€/short"
-                value={pricing?.costoXShort ?? 0}
-                type="number"
-                onSave={(v) => saveField("costoXShort", v)}
-              />
-            </div>
-            <div className="rounded-lg border border-white/[0.08] bg-[#0a0a0a] p-3">
-              <p className="text-white/30 text-[11px] mb-1">€ / Long</p>
-              <EditableField
-                label="€/long"
-                value={pricing?.costoXLong ?? 0}
-                type="number"
-                onSave={(v) => saveField("costoXLong", v)}
-              />
-            </div>
-            <div className="rounded-lg border border-white/[0.08] bg-[#0a0a0a] p-3">
-              <p className="text-white/30 text-[11px] mb-1">Stato</p>
-              <PagamentoToggle
-                clientName={client.name}
-                value={pricing?.statoPagamento ?? "Da fatturare"}
-                onSave={(v) => saveField("statoPagamento", v)}
-              />
-            </div>
-          </div>
-        </section>
+        {/* Contratto + Pricing per tipologia */}
+        {(() => {
+          const tipologie: TipologiaVideo[] = pricing?.tipologie ?? [];
+          const totaleMensile = tipologie.reduce((s, t) => s + t.prezzo * t.videiFatti, 0);
+
+          async function saveTipologia(index: number, fields: Partial<TipologiaVideo>) {
+            await apiPost({ tipologiaUpdate: { index, ...fields } });
+          }
+          async function deleteTipologia(index: number) {
+            await apiPost({ tipologiaDelete: index });
+          }
+          async function addTipologia() {
+            await apiPost({ tipologiaAdd: { nome: "Nuova tipologia", prezzo: 0, videiFatti: 0, videoInclusi: 0 } });
+          }
+
+          return (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <Euro className="w-3.5 h-3.5 text-white/30" />
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Pricing</h3>
+                <div className="ml-auto flex items-center gap-3">
+                  {totaleMensile > 0 && (
+                    <span className="text-xs text-[#39FF14] font-mono">€{totaleMensile.toFixed(0)}/mese</span>
+                  )}
+                  <ContractTypeToggle
+                    value={(pricing?.tipoContratto ?? "a-video") as "pacchetto" | "a-video"}
+                    onSave={(v) => saveField("tipoContratto", v)}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] overflow-hidden bg-[#0a0a0a]">
+                {tipologie.length > 0 ? (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                        <th className="text-left px-3 py-2 text-[10px] text-white/25 font-medium uppercase tracking-wider">Tipologia</th>
+                        <th className="text-right px-3 py-2 text-[10px] text-white/25 font-medium uppercase tracking-wider">€/video</th>
+                        <th className="text-right px-3 py-2 text-[10px] text-white/25 font-medium uppercase tracking-wider">Fatti</th>
+                        <th className="px-3 py-2 text-[10px] text-white/25 font-medium uppercase tracking-wider">Inclusi</th>
+                        <th className="px-2 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tipologie.map((t, i) => (
+                        <TipologiaRow key={i} tipologia={t} index={i} onSave={saveTipologia} onDelete={deleteTipologia} />
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="text-white/20 text-xs text-center py-4">Nessuna tipologia aggiunta</p>
+                )}
+                <button
+                  onClick={addTipologia}
+                  className="w-full text-left px-3 py-2.5 text-xs text-white/30 hover:text-[#39FF14] hover:bg-[#39FF14]/5 border-t border-white/[0.05] transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-base leading-none">+</span> Aggiungi tipologia
+                </button>
+              </div>
+
+              {/* Stato pagamento */}
+              <div className="mt-2.5 flex items-center justify-between px-1">
+                <span className="text-white/30 text-xs">Stato pagamento</span>
+                <PagamentoToggle
+                  clientName={client.name}
+                  value={pricing?.statoPagamento ?? "Da fatturare"}
+                  onSave={(v) => saveField("statoPagamento", v)}
+                />
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Notes */}
         <section>
@@ -302,6 +510,18 @@ function ClientDetail({
           ) : (
             <p className="text-white/20 text-sm text-center py-6 rounded-xl border border-white/[0.05]">Nessun contenuto in pipeline</p>
           )}
+        </section>
+
+        {/* Video Prodotti */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Film className="w-3.5 h-3.5 text-white/30" />
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Video Prodotti</h3>
+            <span className="text-[11px] text-white/25 ml-auto">
+              {clientCards.filter((c) => c.status === "Pubblicato" || c.status === "Approvato").length} video
+            </span>
+          </div>
+          <VideoProducedList cards={clientCards} />
         </section>
 
         {/* SMM Log — solo per VideoCraft Studio */}

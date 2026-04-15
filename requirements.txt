@@ -1,5 +1,5 @@
 # Videocraft Studio — Python dependencies
-python-telegram-bot==20.7
+python-telegram-bot[job-queue]==20.7
 anthropic>=0.28.0
 openai-whisper
 python-dotenv>=1.0.0

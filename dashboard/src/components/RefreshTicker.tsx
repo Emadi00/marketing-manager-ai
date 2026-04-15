@@ -5,16 +5,23 @@ import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function RefreshTicker({ intervalMs = 30000 }: { intervalMs?: number }) {
+export function RefreshTicker({
+  intervalMs = 15000,
+  hasActive = false,
+}: {
+  intervalMs?: number;
+  hasActive?: boolean;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    if (!hasActive) return; // stop polling when no active pipelines
     const id = setInterval(() => {
       startTransition(() => router.refresh());
     }, intervalMs);
     return () => clearInterval(id);
-  }, [router, intervalMs]);
+  }, [router, intervalMs, hasActive]);
 
   function handleClick() {
     startTransition(() => router.refresh());

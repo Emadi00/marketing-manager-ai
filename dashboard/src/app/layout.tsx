@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "@/components/Sidebar";
+import { readPipeline, readIdeas } from "@/lib/data";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { cards } = readPipeline();
+  const { clients: ideaClients } = readIdeas();
+
+  const reviewBadge = cards.filter((c) => c.status === "In Approvazione").length;
+  const ideasBadge  = ideaClients.reduce(
+    (s, c) => s + c.reels.length + c.posts.length + c.carousels.length,
+    0
+  );
+
   return (
     <html
       lang="it"
@@ -31,7 +41,7 @@ export default function RootLayout({
     >
       <body className="h-full flex bg-background text-foreground" suppressHydrationWarning>
         <TooltipProvider>
-          <Sidebar />
+          <Sidebar reviewBadge={reviewBadge} ideasBadge={ideasBadge} />
           <main className="flex-1 overflow-y-auto">
             {children}
           </main>

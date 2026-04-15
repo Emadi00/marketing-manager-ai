@@ -1,0 +1,67 @@
+## STYLE DNA: videocraft
+
+**Descrizione utente**: Stile dark neon minimalista per video social Remotion
+**Mood**: tecnico, assertivo, digitale
+
+### Palette colori
+- Primario:   #00FF00
+- Secondario: #00AAFF
+- Accento:    #FFB800
+- Background: #050A0E
+- Testo:      #FFFFFF
+
+### Tipografia
+- Stile:     display bold condensed (Bebas Neue / Orbitron) con contrasto script calligrafico (Pinyon Script) per elementi subordinati
+- Peso:      extrabold per titoli (900), light per label tecnici e caption
+- Dimensioni:titolo hero large ~25% larghezza frame; CTA bottone medium-large; caption/subtitle small 18-22px equivalente; gerarchia a tre livelli netti
+- Posizione: centrato sull'asse verticale; elementi CTA leggermente sotto il centro geometrico (~55% dall'alto)
+
+### Elementi grafici
+card arrotondate con bordo neon verde glow (border-radius 20-24px, stroke glow ~15-20px spread), linee orizzontali e verticali neon sottili (1-2px) con glow diffuso su sfondo nero, handle/playhead rettangolare ciano come punto focale geometrico, gradiente radiale verticale dal nero assoluto verso verde saturo in basso, vignette radiale nera pronunciata agli angoli, bottone rettangolare con border-radius 12-16px, struttura doppio layer (fill + base bianca thin), freccia chevron/dropdown sotto il bottone CTA, banner diagonale a 45° come elemento di rottura compositiva, indicatore paginazione minimal (rettangolo piccolo bottom-center), logo badge con icon play triangolare e tagli geometrici
+
+### Layout e composizione
+asse verticale centrale con simmetria orizzontale; spazio negativo dominante (75-90% nei frame chiave); elementi concentrati in zona centrale ristretta; CTA posizionato sotto il centro geometrico; spazio negativo superiore crea tensione visiva verso il basso
+
+### Animazioni
+smooth e lente con spring soft per transizioni di stato; fade-in pulito per elementi testuali; nessun glitch né shake; glow pulse lento ammesso su bordi neon
+
+### Densità visiva
+minimalista
+
+### Elemento unico di questo stile
+contrasto tipografico radicale tra display urbano ALL CAPS condensato e script calligrafico corsivo; bordi card con glow neon verde LED su nero quasi assoluto; linee neon geometriche (orizzontale blu + ambra + verticale ciano) che evocano timeline NLE/DAW su sfondo vuoto; spazio negativo intenzionalmente drammatico come elemento compositivo primario
+
+### Note tecniche per Video Editor (Remotion)
+Sfondo sempre nero profondo (#050A0E o #000000) con gradiente radiale verde dal basso. Usare boxShadow con spread ampio per simulare glow neon su bordi e linee. Font Orbitron o Bebas Neue per titoli hero e CTA; Pinyon Script solo per testi subordinati/introduttori. Bottoni con border-radius 12-16px e struttura doppio layer. Animazioni spring soft (damping:18, stiffness:120). Nessuna texture, grain, glitch o shake. Vignette radiale nera obbligatoria. CTA posizionato a 55% dall'alto.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## REGOLE TSX (OBBLIGATORIE — copia questi valori nel codice)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ QUESTE REGOLE SOVRASCRIVONO I DEFAULT DEL VIDEO EDITOR.
+Il Video Editor DEVE creare theme.ts con ESATTAMENTE questi valori.
+
+### Colori (usa in THEME — niente hardcoding nei componenti)
+- backgroundColor:  #050A0E
+- textPrimary:      #FFFFFF
+- textSecondary:    #00FF00
+- accent:           #00AAFF
+- accent2:          #FFB800
+
+### Font (nomi esatti da usare in fontFamily)
+- fontTitle:        Orbitron
+- fontSubtitle:     Pinyon Script
+- fontSizeTitle:    48px
+- fontSizeBody:     22px
+- fontSizeSub:      14px
+- fontWeight:       900
+
+### Animazioni e layout
+- Spring preset:          soft
+- Animazioni PERMESSE:    fade-in, spring-soft, glow-pulse-slow, slide-up-gentle
+- Animazioni VIETATE:     glitch, shake, bounce-aggressive, zoom-crash, chromatic-aberration
+- Elementi decorativi:    bordi card con boxShadow neon verde (#00FF00, spread 15-20px); linee orizzontali neon 1-2px (blu #0066FF e ambra #FFB800) con filter blur(2px) glow; linea verticale ciano #00AAFF come playhead; gradiente radiale sfondo dal basso (#008000 → #004400 → #050A0E); vignette radiale nera agli angoli; bottone doppio-layer con base bianca thin (#E8E8E8) e fill verde (#44AA33); freccia chevron sotto CTA
+- Densità visiva:         minima
+- Layout:                 centrato
+
+### Note obbligatorie aggiuntive
+Spazio negativo minimo 75% del frame — non aggiungere elementi decorativi non presenti nella lista. Il glow neon deve essere simulato esclusivamente con boxShadow/filter:drop-shadow, mai con immagini raster. Il contrasto tipografico Orbitron/Bebas vs Pinyon Script è identitario e obbligatorio. Sfondo nero con gradiente radiale verde dal basso è invariante — non usare sfondi piatti puri né colori caldi. CTA bottone sempre posizionato a translateY(+5% dal centro geometrico). Vignette radiale nera sempre attiva.

@@ -22,7 +22,7 @@ import asyncio
 import threading
 import urllib.request
 import urllib.error
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Callable, Awaitable
 
@@ -30,6 +30,7 @@ from typing import Callable, Awaitable
 _DIR                = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH            = os.path.join(_DIR, "smm_log.json")
 CLIENTI_SOCIAL_PATH = os.path.join(_DIR, "clienti_social.json")
+PIANO_PATH          = os.path.join(_DIR, "piano_editoriale.json")
 
 # ── Configurazione ─────────────────────────────────────────────────────────────
 UPLOAD_POST_BASE    = "https://api.upload-post.com/api"
@@ -57,6 +58,82 @@ def _get_api_key() -> str:
     if not API_KEY:
         API_KEY = _load_api_key()
     return API_KEY
+
+def _load_piano() -> dict:
+    """Carica piano_editoriale.json. Ritorna {} se non trovato."""
+    try:
+        with open(PIANO_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+_GIORNI_NOMI = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"]
+_MESI_IT     = ["", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+_GIORNI_IT   = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+
+def calculate_schedule_date(rubrica_id: str | None = None) -> tuple[str | None, str]:
+    """
+    Calcola il prossimo slot di pubblicazione ottimale dal piano editoriale.
+    Ritorna (iso8601_utc, label_leggibile).
+    - iso8601_utc: es. "2026-04-16T10:00:00Z" (UTC), None se nessuno slot trovato.
+    - label_leggibile: es. "Mercoledì 16 Aprile alle 12:00"
+    Usa UTC+2 (CEST) come ora locale italiana per aprile-ottobre.
+    """
+    piano = _load_piano()
+    if not piano:
+        return None, "piano_editoriale.json non trovato"
+
+    cal = piano.get("calendario_settimanale_tipo", {})
+    # UTC+2 = CEST (aprile–ottobre); per CET (nov–mar) sarebbe UTC+1
+    utc_offset = 2
+    now_utc   = datetime.now(timezone.utc)
+    now_local = now_utc + timedelta(hours=utc_offset)
+
+    for days_ahead in range(1, 8):
+        target_local = now_local + timedelta(days=days_ahead)
+        giorno_nome  = _GIORNI_NOMI[target_local.weekday()]
+        slots = cal.get(giorno_nome, [])
+        for slot in slots:
+            # Se è specificata una rubrica filtra, altrimenti prende il primo slot
+            if rubrica_id and slot.get("rubrica") != rubrica_id:
+                continue
+            ora_str = slot.get("orario", "12:00")
+            try:
+                h, m = map(int, ora_str.split(":"))
+            except ValueError:
+                h, m = 12, 0
+            # Prova a raffinare l'ora con analytics (tollera ±3 ore rispetto al piano)
+            try:
+                import analytics_fetcher
+                best_h = analytics_fetcher.get_best_hour_near(h, tolerance=3)
+                if best_h is not None and best_h != h:
+                    h = best_h
+                    ora_str = f"{h:02d}:00"
+            except Exception:
+                pass  # analytics non disponibili — usa orario del piano
+
+            slot_local = target_local.replace(hour=h, minute=m, second=0, microsecond=0)
+            slot_utc   = slot_local - timedelta(hours=utc_offset)
+            iso        = slot_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+            label      = (
+                f"{_GIORNI_IT[target_local.weekday()]} "
+                f"{target_local.day} {_MESI_IT[target_local.month]} "
+                f"alle {ora_str}"
+            )
+            return iso, label
+
+    # Nessuno slot nel piano → usa domani a mezzogiorno
+    fallback_local = now_local + timedelta(days=1)
+    fallback_local = fallback_local.replace(hour=12, minute=0, second=0, microsecond=0)
+    fallback_utc   = fallback_local - timedelta(hours=utc_offset)
+    iso    = fallback_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    label  = (
+        f"{_GIORNI_IT[fallback_local.weekday()]} "
+        f"{fallback_local.day} {_MESI_IT[fallback_local.month]} alle 12:00"
+        " _(fallback — rubrica non trovata nel piano)_"
+    )
+    return iso, label
 
 def _auth_header() -> str:
     """

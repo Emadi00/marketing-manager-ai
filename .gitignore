@@ -85,11 +85,30 @@ dashboard/node_modules/
 dashboard/.next/
 dashboard/out/
 
-# ── Misc OS ───────────────────────────────────
+# ── Runtime data (generati automaticamente, non versionare) ──
+analytics_cache.json
+smm_log.json
+tts_config.json
+topics.json
+piano_editoriale.json
+
+# ── B-roll cache (file scaricati, riproducibili) ──────────────
+broll_cache/
+CODICE/video-editor/public/broll/
+CODICE/video-editor/public/voiceover.mp3
+CODICE/video-editor/public/timeline.json
+
+# ── Backup e file temporanei ──────────────────────────────────
+*_backup.py
+bot_telegram_backup.py
+llm.txt
+llm_try2.txt
+test_ideogram.png
+deploy/
+
+# ── Misc OS ───────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
 *.swp
 *.swo
-llm_try2.txt
-test_ideogram.png

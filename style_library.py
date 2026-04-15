@@ -190,8 +190,16 @@ Analizza il frame e fornisci un profilo visivo dettagliato e tecnico:
 5. **Layout e composizione** — dove si trovano gli elementi, uso dello spazio negativo, gerarchia visiva
 6. **Mood** — sensazione emotiva trasmessa da questo frame
 7. **Elemento distintivo** — cosa rende unico questo frame rispetto allo "standard"
+8. **Valori TSX estraibili** (sezione critica — usata per generare codice Remotion):
+   - `backgroundColor`: colore HEX esatto dello sfondo predominante in questo frame
+   - `textColorPrimary`: colore HEX esatto del testo principale
+   - `textColorAccent`: colore HEX esatto dell'accento cromatico dominante
+   - `fontCategory`: categoria font rilevata (display-bold / script-calligrafico / pixel / sans-serif / serif) e suggerimento nome (es. Orbitron, Montserrat, Pinyon Script)
+   - `animazioneOsservata`: stile di animazione suggerito dall'estetica del frame (es. "spring aggressive — entrate nette", "fade lento — transizioni morbide", "typewriter — testo progressivo")
+   - `densitaVisiva`: minima / media / alta (in base alla percentuale di spazio vuoto vs elementi)
+   - `elementiDecorativi`: descrivi esattamente cosa vedi come decorazione (o scrivi "nessuno" se il frame è pulito)
 
-Sii preciso, tecnico, e usa i termini giusti del design visivo. Rispondi in italiano."""
+Sii preciso, tecnico, e usa i termini giusti del design visivo. I valori TSX devono essere ESTRATTI da ciò che vedi, non inventati. Rispondi in italiano."""
 
     payload = {
         "model": MODEL,
@@ -232,6 +240,21 @@ Analisi frame per frame:
 {analisi_testo}
 
 Sintetizza tutto in un profilo visivo unico e coerente. Considera i pattern ricorrenti tra i frame.
+
+⚠️ REGOLA CRITICA — REGOLE TSX:
+Il campo "regole_tsx" contiene DIRETTIVE OPERATIVE per il Video Editor Remotion.
+TUTTI i valori DEVONO essere ESTRATTI dall'analisi dei frame — non inventati, non valori di default.
+Ogni stile produce regole TSX diverse perché ogni stile ha colori, font e animazioni diversi:
+- Uno stile "minimal dark" → backgroundColor scuro, zero elementi decorativi, animazioni slow
+- Uno stile "energetico colorato" → colori vivaci, spring aggressive, elementi grafici presenti
+I valori devono essere CONCRETI e COPIABILI direttamente nel codice TypeScript:
+- colori: codici hex reali estratti dalla palette (non descrizioni)
+- font: nomi esatti dei font rilevati (o la categoria più vicina tra Orbitron/Montserrat/Inter/AlfenaPixel/Pinyon Script)
+- animazioni_permesse: SOLO quelle che corrispondono allo stile rilevato dai frame
+- animazioni_vietate: quelle che contraddicono lo stile (es. glitch in uno stile minimalista)
+- spring_preset: "aggressive" (damping:6,stiffness:300) / "standard" (damping:12,stiffness:150) / "soft" (damping:18,stiffness:120)
+- densita_visiva: "minima" / "media" / "alta" — basata sulla percentuale di spazio vuoto osservata nei frame
+
 Rispondi SOLO con JSON valido, nessun testo prima o dopo:
 
 {{
@@ -257,6 +280,26 @@ Rispondi SOLO con JSON valido, nessun testo prima o dopo:
   "mood": "parola1, parola2, parola3",
   "elementi_unici": "cosa rende inconfondibile questo stile",
   "note_tecniche": "indicazioni concrete per il Video Editor Remotion",
+  "regole_tsx": {{
+    "backgroundColor":    "#XXXXXX",
+    "textPrimary":        "#XXXXXX",
+    "textSecondary":      "#XXXXXX",
+    "accent":             "#XXXXXX",
+    "accent2":            "#XXXXXX",
+    "fontTitle":          "NomeFont",
+    "fontSubtitle":       "NomeFont",
+    "fontSizeTitle":      "NNpx",
+    "fontSizeBody":       "NNpx",
+    "fontSizeSub":        "NNpx",
+    "fontWeight":         "NNN",
+    "animazioni_permesse": ["spring-aggressive", "fade-in"],
+    "animazioni_vietate":  ["glitch", "shake"],
+    "elementi_decorativi": "descrizione esatta di cosa si vede come decorazione nei frame, oppure nessuno",
+    "densita_visiva":     "minima",
+    "layout":             "centrato",
+    "spring_preset":      "aggressive",
+    "note_obbligatorie":  "regola critica specifica estratta dallo stile"
+  }},
   "frame_analizzati": {len(analisi)},
   "creato": "{now}"
 }}"""
@@ -279,12 +322,54 @@ def profilo_to_txt(profilo: dict) -> str:
     """
     Produce il blocco testuale "STYLE DNA" da iniettare nel brief del Marketing Manager.
     Formato Markdown leggibile dagli agenti LLM.
+    Include la sezione REGOLE TSX con valori operativi copiabili direttamente nel codice.
     """
     p   = profilo
     pal = p.get("palette", {})
     tip = p.get("tipografia", {})
+    tsx = p.get("regole_tsx", {})
     grafici = p.get("elementi_grafici", [])
     grafici_str = ", ".join(grafici) if grafici else "—"
+
+    # Sezione REGOLE TSX — presente solo se il profilo le ha (stili generati con nuova versione)
+    if tsx:
+        anim_ok  = ", ".join(tsx.get("animazioni_permesse", [])) or "—"
+        anim_no  = ", ".join(tsx.get("animazioni_vietate",  [])) or "—"
+        regole_tsx_block = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## REGOLE TSX (OBBLIGATORIE — copia questi valori nel codice)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ QUESTE REGOLE SOVRASCRIVONO I DEFAULT DEL VIDEO EDITOR.
+Il Video Editor DEVE creare theme.ts con ESATTAMENTE questi valori.
+
+### Colori (usa in THEME — niente hardcoding nei componenti)
+- backgroundColor:  {tsx.get('backgroundColor', pal.get('background', '#0a0a0a'))}
+- textPrimary:      {tsx.get('textPrimary',    pal.get('testo',      '#ffffff'))}
+- textSecondary:    {tsx.get('textSecondary',   '#aaaaaa')}
+- accent:           {tsx.get('accent',          pal.get('accento',    '#39FF14'))}
+- accent2:          {tsx.get('accent2',         pal.get('secondario', '#ffffff'))}
+
+### Font (nomi esatti da usare in fontFamily)
+- fontTitle:        {tsx.get('fontTitle',    tip.get('stile', 'Orbitron'))}
+- fontSubtitle:     {tsx.get('fontSubtitle', 'Montserrat')}
+- fontSizeTitle:    {tsx.get('fontSizeTitle', '72px')}
+- fontSizeBody:     {tsx.get('fontSizeBody',  '36px')}
+- fontSizeSub:      {tsx.get('fontSizeSub',   '24px')}
+- fontWeight:       {tsx.get('fontWeight',    '900')}
+
+### Animazioni e layout
+- Spring preset:          {tsx.get('spring_preset', 'standard')}
+- Animazioni PERMESSE:    {anim_ok}
+- Animazioni VIETATE:     {anim_no}
+- Elementi decorativi:    {tsx.get('elementi_decorativi', '—')}
+- Densità visiva:         {tsx.get('densita_visiva', p.get('densita_visiva', '—'))}
+- Layout:                 {tsx.get('layout', 'centrato')}
+
+### Note obbligatorie aggiuntive
+{tsx.get('note_obbligatorie', '—')}"""
+    else:
+        regole_tsx_block = ""
 
     return f"""## STYLE DNA: {p.get('nome', '?')}
 
@@ -320,7 +405,7 @@ def profilo_to_txt(profilo: dict) -> str:
 {p.get('elementi_unici', '?')}
 
 ### Note tecniche per Video Editor (Remotion)
-{p.get('note_tecniche', '?')}"""
+{p.get('note_tecniche', '?')}{regole_tsx_block}"""
 
 # ── Pipeline completa: salva stile da immagini ───────────────────────────────
 async def salva_stile_da_foto(
@@ -471,6 +556,82 @@ async def salva_stile(
     print(f"[StyleLib] ✅ Stile '{nome}' salvato — costo totale: ${costo_tot:.4f}", flush=True)
     profilo["_costo_sessione"] = round(costo_tot, 4)
     return profilo
+
+async def rigenera_profilo_tsx(
+    nome: str,
+    progress_cb=None,
+) -> dict:
+    """
+    Rigenera il profilo di uno stile esistente rianalizzando i frame già salvati.
+    Usa i prompt aggiornati (con punto 8 TSX per frame e regole_tsx con densita_visiva).
+    Sovrascrive style_profile.json e style_profile.txt.
+    Ritorna il profilo aggiornato.
+    """
+    if not API_KEY:
+        raise RuntimeError("API_KEY non configurata in style_library")
+
+    style_path = _style_dir(nome)
+    frames_dir = os.path.join(style_path, "frames")
+    profile_path = os.path.join(style_path, "style_profile.json")
+
+    if not os.path.exists(frames_dir):
+        raise RuntimeError(f"Nessuna cartella frames per lo stile '{nome}'")
+
+    frame_paths = sorted([
+        os.path.join(frames_dir, f)
+        for f in os.listdir(frames_dir)
+        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+    ])
+    if not frame_paths:
+        raise RuntimeError(f"Nessun frame trovato in {frames_dir}")
+
+    # Carica descrizione dal profilo esistente (se presente)
+    descrizione = nome
+    if os.path.exists(profile_path):
+        try:
+            with open(profile_path, encoding="utf-8") as f:
+                old_profilo = json.load(f)
+            descrizione = old_profilo.get("descrizione_utente", nome)
+        except Exception:
+            pass
+
+    if progress_cb:
+        await progress_cb(f"🔄 Rigenera '{nome}': {len(frame_paths)} frame con prompt aggiornato...")
+
+    analisi   = []
+    costo_tot = 0.0
+    for idx, fp in enumerate(frame_paths, 1):
+        if progress_cb:
+            await progress_cb(f"🔍 Analisi frame {idx}/{len(frame_paths)}...")
+        testo, usage = analizza_frame(fp, descrizione, idx, len(frame_paths))
+        analisi.append(testo)
+        costo_tot += _costo(usage)
+
+    if progress_cb:
+        await progress_cb(f"🧬 Sintesi profilo TSX aggiornato ({len(analisi)} analisi)...")
+    profilo, usage_synth = sintetizza_profilo(analisi, descrizione, nome)
+    costo_tot += _costo(usage_synth)
+
+    # Preserva data creazione originale
+    if os.path.exists(profile_path):
+        try:
+            with open(profile_path, encoding="utf-8") as f:
+                old = json.load(f)
+            profilo["creato"]    = old.get("creato", profilo.get("creato", datetime.now().isoformat()))
+            profilo["aggiornato"] = datetime.now().isoformat()
+        except Exception:
+            pass
+
+    with open(profile_path, "w", encoding="utf-8") as f:
+        json.dump(profilo, f, ensure_ascii=False, indent=2)
+    txt_path = os.path.join(style_path, "style_profile.txt")
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write(profilo_to_txt(profilo))
+
+    print(f"[StyleLib] ✅ Stile '{nome}' rigenerato — {len(frame_paths)} frame — costo: ${costo_tot:.4f}", flush=True)
+    profilo["_costo_sessione"] = round(costo_tot, 4)
+    return profilo
+
 
 # ── Visual compliance check post-render ──────────────────────────────────────
 

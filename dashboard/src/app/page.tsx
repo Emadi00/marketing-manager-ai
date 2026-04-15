@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { readPipeline, readClients } from "@/lib/data";
+import { readPipeline, readClients, readClientiSocial } from "@/lib/data";
 import { PipelineCard, PipelineRow } from "@/components/PipelineCard";
 import { ClientFilter } from "@/components/ClientFilter";
 import { RefreshTicker } from "@/components/RefreshTicker";
+import { CreatePipelineButton } from "@/components/CreatePipelineButton";
 
 interface Props {
   searchParams: Promise<{ client?: string }>;
@@ -12,6 +13,10 @@ export default async function HomePage({ searchParams }: Props) {
   const { client: clientFilter } = await searchParams;
   const data = readPipeline();
   const allClients = readClients();
+  const socialClients = readClientiSocial().map((c) => c.name);
+
+  // Merge: nomi da pipeline + nomi da clienti_social (deduplica, ordinati)
+  const clientNames = Array.from(new Set([...socialClients, ...allClients])).sort();
 
   const cards = clientFilter
     ? data.cards.filter((c) => c.client === clientFilter)
@@ -45,7 +50,8 @@ export default async function HomePage({ searchParams }: Props) {
           <Suspense>
             <ClientFilter clients={allClients} />
           </Suspense>
-          <RefreshTicker />
+          <RefreshTicker hasActive={active.length > 0} />
+          <CreatePipelineButton clients={clientNames} />
         </div>
       </div>
 
@@ -138,14 +144,16 @@ export default async function HomePage({ searchParams }: Props) {
         {cards.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <p className="text-white/20 text-4xl mb-3">📭</p>
-            <p className="text-white/30 text-sm">
+            <p className="text-white/30 text-sm mb-4">
               {clientFilter
                 ? `Nessun contenuto per "${clientFilter}"`
-                : "Nessuna pipeline. Manda un brief su Telegram per iniziare."}
+                : "Nessuna pipeline attiva."}
             </p>
+            {!clientFilter && <CreatePipelineButton clients={clientNames} variant="cta" />}
           </div>
         )}
       </div>
     </div>
   );
 }
+
